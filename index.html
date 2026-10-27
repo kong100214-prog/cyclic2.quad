@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>네 점이 한 원 위에 있을까</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6fb; --panel:#ffffff; --ink:#1e293b; --muted:#64748b; --line:#e2e8f0;
+  --brand:#4338ca; --brand-soft:#eef2ff; --blue:#2563eb; --blue-soft:#dbeafe;
+  --orange:#ea580c; --orange-soft:#ffedd5; --green:#16a34a; --green-soft:#dcfce7;
+  --red:#dc2626; --red-soft:#fee2e2;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Noto Sans KR',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}
+header{background:linear-gradient(120deg,#4338ca,#6d28d9);color:#fff;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header h1{margin:0;font-size:1.35rem;font-weight:900}
+header p{margin:2px 0 0;font-size:.92rem;opacity:.9}
+.btn{font-family:inherit;font-size:.9rem;font-weight:700;border:none;border-radius:10px;padding:9px 14px;cursor:pointer;transition:transform .08s,background .15s}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-white{background:#fff;color:var(--brand)}
+.btn-brand{background:var(--brand);color:#fff}
+.btn-brand:hover:not(:disabled){background:#3730a3}
+.btn-ghost{background:var(--brand-soft);color:var(--brand)}
+.btn-orange{background:var(--orange);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.layout{display:grid;grid-template-columns:420px 1fr;gap:18px;padding:18px;max-width:1400px;margin:0 auto}
+@media (max-width:960px){.layout{grid-template-columns:1fr;padding:12px}}
+.panel{background:var(--panel);border-radius:16px;box-shadow:0 1px 3px rgba(15,23,42,.08);padding:16px}
+.progress{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.progress h2{margin:0;font-size:1.05rem}
+.progress span{font-size:.85rem;color:var(--brand);font-weight:700;background:var(--brand-soft);padding:4px 10px;border-radius:999px}
+.step{border:2px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden;transition:border-color .2s}
+.step.active{border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-soft)}
+.step.locked{opacity:.5}
+.step-head{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:default}
+.step.done .step-head{cursor:pointer}
+.num{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:.9rem;background:var(--line);color:var(--muted)}
+.step.active .num{background:var(--brand);color:#fff}
+.step.done .num{background:var(--green);color:#fff}
+.step-head h3{margin:0;font-size:.98rem}
+.step-head .toggle{margin-left:auto;font-size:.8rem;color:var(--muted)}
+.step-body{padding:0 12px 12px 50px;font-size:.92rem}
+.step-body p{margin:0 0 8px}
+.counter{display:inline-block;font-size:.85rem;font-weight:700;color:var(--orange);background:var(--orange-soft);padding:3px 10px;border-radius:8px}
+table.rec{width:100%;border-collapse:collapse;margin:8px 0;font-size:.86rem}
+table.rec th,table.rec td{border:1px solid var(--line);padding:6px 4px;text-align:center}
+table.rec th{background:#f8fafc;font-weight:700}
+table.rec th.cb{color:var(--blue)} table.rec th.cd{color:var(--orange)}
+table.rec tr.ok td{background:var(--green-soft)}
+table.rec tr.bad td{background:var(--red-soft)}
+table.rec select{font-family:inherit;font-size:1rem;font-weight:700;padding:2px 6px;border-radius:6px;border:1px solid #cbd5e1}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.feedback{margin-top:8px;font-size:.88rem;font-weight:500}
+.feedback.bad{color:var(--red)}
+.discover{margin-top:10px;background:var(--green-soft);border:1px solid #86efac;border-radius:12px;padding:10px 12px;font-size:.9rem}
+.discover b{color:#166534}
+.quiz{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.card{border:1.5px solid var(--line);border-radius:12px;padding:8px;text-align:center;background:#fff}
+.card svg{width:64px;height:48px}
+.card .name{font-weight:700;font-size:.9rem;margin:2px 0 6px}
+.card .ox{display:flex;gap:6px;justify-content:center}
+.card .ox button{font-family:inherit;font-weight:900;border:1.5px solid #cbd5e1;background:#fff;border-radius:8px;width:44px;height:32px;cursor:pointer;font-size:1rem}
+.card .ox button.sel{background:var(--brand);color:#fff;border-color:var(--brand)}
+.card.ok{border-color:var(--green);background:#f0fdf4}
+.card.bad{border-color:var(--red);background:#fef2f2}
+.card .why{font-size:.78rem;margin-top:6px;color:var(--muted);text-align:left}
+.success{margin-top:12px;background:linear-gradient(120deg,#ecfdf5,#eef2ff);border:1px solid #a5b4fc;border-radius:12px;padding:12px}
+.success h4{margin:0 0 6px}
+.summary{margin-top:14px;border:2px solid var(--brand);border-radius:14px;padding:14px;background:#fafaff}
+.summary h3{margin:0 0 10px;color:var(--brand)}
+.summary .box{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:.92rem}
+.summary .box b.t{display:block;margin-bottom:4px}
+.formula{display:inline-block;background:var(--brand-soft);color:var(--brand);font-weight:700;padding:2px 8px;border-radius:6px;margin-top:4px}
+.board-wrap{display:flex;flex-direction:column;gap:10px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.toolbar .tool{font-size:.85rem;color:var(--muted);margin-left:auto}
+#board{width:100%;height:auto;background:#fff;border-radius:16px;box-shadow:0 1px 3px rgba(15,23,42,.08);touch-action:none;user-select:none;display:block}
+.status{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--panel);border-radius:12px;padding:10px 12px;font-size:.92rem;box-shadow:0 1px 3px rgba(15,23,42,.08)}
+.chip{font-weight:900;padding:4px 10px;border-radius:8px;font-size:1rem}
+.chip.c{background:var(--blue-soft);color:var(--blue)}
+.chip.d{background:var(--orange-soft);color:var(--orange)}
+.chip.s{background:var(--green-soft);color:var(--green)}
+.hint{background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:10px 12px;font-size:.92rem;font-weight:500}
+.note{font-size:.82rem;color:var(--muted)}
+/* svg */
+.circ{fill:none;stroke:#6366f1;stroke-width:2.5}
+.circ.ghost{stroke:#c7d2fe;stroke-dasharray:4 6;stroke-width:1.5}
+.center{fill:#6366f1}
+.abline{stroke:#94a3b8;stroke-width:1.2;stroke-dasharray:6 6}
+.quad{fill:rgba(22,163,74,.08);stroke:none}
+.segAB{stroke:#475569;stroke-width:2}
+.segC{stroke:var(--blue);stroke-width:2.5}
+.segD{stroke:var(--orange);stroke-width:2.5}
+.wc{fill:rgba(37,99,235,.18);stroke:var(--blue);stroke-width:1.5}
+.wd{fill:rgba(234,88,12,.18);stroke:var(--orange);stroke-width:1.5}
+.alabel{font-size:14px;font-weight:900;paint-order:stroke;stroke:#fff;stroke-width:4px}
+.wct{fill:var(--blue)} .wdt{fill:var(--orange)}
+.pt{fill:#1e293b;stroke:#fff;stroke-width:2}
+.ptD{fill:var(--orange);stroke:#fff;stroke-width:2.5}
+.lbl{font-size:17px;font-weight:900;fill:#1e293b;paint-order:stroke;stroke:#fff;stroke-width:4px}
+.lbl.small{font-size:13px;fill:#6366f1}
+.lblD{fill:var(--orange)}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>중3 수학: 네 점이 한 원 위에 있을까?</h1>
+    <p>점을 움직이며 각을 비교하고, 원을 그리지 않고도 판단하는 방법을 찾아봅시다!</p>
+  </div>
+  <button class="btn btn-white" id="resetBtn">처음부터 다시하기</button>
+</header>
+
+<div class="layout">
+  <!-- 왼쪽: 학습 단계 -->
+  <aside class="panel">
+    <div class="progress"><h2>학습 단계 (Step-by-Step)</h2><span id="progress">1 / 6 단계 진행 중</span></div>
+
+    <div class="step" data-step="1">
+      <div class="step-head"><div class="num">1</div><h3>외접원을 그릴 수 있을까?</h3><span class="toggle"></span></div>
+      <div class="step-body">
+        <div id="s1tri">
+          <p><b>① 삼각형</b> 꼭짓점 A, B, C를 끌어 삼각형의 모양을 여러 가지로 바꿔 보세요.</p>
+          <p class="note">세 변의 수직이등분선(색깔 직선)은 어떻게 되나요? 세 꼭짓점을 모두 지나는 원을 항상 그릴 수 있나요?</p>
+          <div class="discover" id="discTri" hidden>
+            🎉 <b>발견!</b> 세 변의 수직이등분선은 언제나 <b>한 점(외심)</b>에서 만나요.<br>
+            <b>어떤 삼각형이든 외접원을 그릴 수 있어요!</b> (중2: 삼각형의 외심)
+            <div class="row"><button class="btn btn-brand" id="toQuad">② 사각형으로 →</button></div>
+          </div>
+        </div>
+        <div id="s1quad" hidden>
+          <p><b>② 사각형</b> 이번에는 사각형 ABCD예요. 네 변의 수직이등분선이 <b>한 점에서 만나나요?</b></p>
+          <p>점 <b>D</b>를 움직여서 네 직선이 한 점에서 만나도록 만들어 보세요.</p>
+          <p class="note">🔵 O₁: 변 AB, BC의 수직이등분선의 교점 &nbsp; 🟠 O₂: 변 CD, DA의 수직이등분선의 교점</p>
+          <div class="row"><button class="btn btn-ghost" id="helpBtn">💡 힌트 보기</button></div>
+          <div class="discover" id="discQuad" hidden>
+            🎉 <b>발견!</b> 점 D가 <b>세 점 A, B, C를 지나는 원 위</b>에 올 때만 네 수직이등분선이 한 점에서 만나요.<br>
+            <b>사각형은 외접원을 항상 그릴 수 있는 것은 아니에요!</b><br>
+            🤔 그렇다면 원을 그려 보지 않고, <b>각의 크기만으로</b> 네 점이 한 원 위에 있는지 알 수 있을까요?
+            <div class="row"><button class="btn btn-brand" data-next="2">2단계로 →</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" data-step="2">
+      <div class="step-head"><div class="num">2</div><h3>원 위에 세 점 A, B, C 찍기</h3><span class="toggle"></span></div>
+      <div class="step-body">
+        <p>오른쪽 원의 <b>둘레 위</b>를 클릭하여 세 점 A, B, C를 찍으세요.</p>
+        <p class="note">세 점은 항상 한 원 위에 놓을 수 있어요. (중2: 삼각형의 외심) 그럼 네 번째 점은?</p>
+        <span class="counter" id="abcCounter">남은 점: 3개</span>
+      </div>
+    </div>
+
+    <div class="step" data-step="3">
+      <div class="step-head"><div class="num">3</div><h3>점 D 찍기</h3><span class="toggle"></span></div>
+      <div class="step-body">
+        <p>점선으로 그린 <b>직선 AB를 기준으로 점 C와 같은 쪽</b>의 아무 곳이나 클릭하여 점 D를 찍으세요.</p>
+        <p class="note">∠ACB(파란색)와 ∠ADB(주황색)가 자동으로 표시돼요.</p>
+      </div>
+    </div>
+
+    <div class="step" data-step="4">
+      <div class="step-head"><div class="num">4</div><h3>같은 쪽에서 D 움직이기</h3><span class="toggle"></span></div>
+      <div class="step-body">
+        <p>점 D를 끌어 <b>원 안 → 원 위 → 원 밖</b>으로 옮기며 두 각을 비교하세요. 위치마다 <b>기록하기</b>를 누르세요.</p>
+        <p class="note">🧲 D를 원 둘레 가까이 가져가면 원 위에 딱 붙어요.</p>
+        <div class="row"><button class="btn btn-orange" id="recSame">📌 현재 위치 기록하기</button></div>
+        <div id="tableSame"></div>
+        <div class="row"><button class="btn btn-brand" id="checkSame" disabled>정답 확인</button></div>
+        <div class="feedback" id="fbSame"></div>
+        <div class="discover" id="discSame" hidden>
+          🎉 <b>발견!</b> C, D가 직선 AB의 같은 쪽에 있을 때<br>
+          D가 <b>원 안</b>이면 ∠ADB가 더 크고, <b>원 밖</b>이면 더 작아요.<br>
+          <b>∠ACB = ∠ADB 이면 네 점 A, B, C, D는 한 원 위에 있어요!</b>
+          <div class="row"><button class="btn btn-brand" data-next="5">5단계로 →</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" data-step="5">
+      <div class="step-head"><div class="num">5</div><h3>반대쪽으로 D 옮기기</h3><span class="toggle"></span></div>
+      <div class="step-body">
+        <p>이번에는 D를 <b>직선 AB 건너편(C의 반대쪽)</b>으로 옮기세요. 두 각이 같아지나요? 이번에는 <b>두 각의 합</b>을 살펴보세요.</p>
+        <p class="note">원 안, 원 위, 원 밖에서 각각 기록하세요. 초록색으로 칠해진 부분이 사각형 ACBD예요.</p>
+        <div class="row"><button class="btn btn-orange" id="recOpp">📌 현재 위치 기록하기</button></div>
+        <div id="tableOpp"></div>
+        <div class="row"><button class="btn btn-brand" id="checkOpp" disabled>정답 확인</button></div>
+        <div class="feedback" id="fbOpp"></div>
+        <div class="discover" id="discOpp" hidden>
+          🎉 <b>발견!</b> D가 C의 반대쪽에 있을 때<br>
+          D가 원 위에 있으면 <b>∠ACB + ∠ADB = 180°</b>예요.<br>
+          <b>사각형의 마주 보는 두 각의 합이 180°이면 네 꼭짓점은 한 원 위에 있어요!</b>
+          <div class="row"><button class="btn btn-brand" data-next="6">6단계로 →</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" data-step="6">
+      <div class="step-head"><div class="num">6</div><h3>어떤 사각형이 원에 내접할까?</h3><span class="toggle"></span></div>
+      <div class="step-body">
+        <p>다음 사각형은 <b>항상</b> 원에 내접할까요? O 또는 X를 고르세요.</p>
+        <div class="quiz" id="quiz"></div>
+        <div class="success" id="success" hidden>
+          <h4>🎉 탐구 성공! 네 점이 한 원 위에 있을 조건 발견</h4>
+          <div>원을 직접 그려 보지 않아도 <b>각도만으로</b> 판단할 수 있게 되었어요.</div>
+          <div class="row"><button class="btn btn-green" id="toSummary">📖 정리 단계로 이동하기</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary" id="summary" hidden>
+      <h3>🎓 개념 최종 정리</h3>
+      <div class="box"><b class="t">1. 같은 쪽에서 본 각이 같으면</b>
+        두 점 C, D가 직선 AB의 같은 쪽에 있을 때<br>
+        <span class="formula">∠ACB = ∠ADB</span> 이면 네 점 A, B, C, D는 한 원 위에 있다.
+        <div class="note" style="margin-top:4px">D가 원 안: ∠ADB &gt; ∠ACB &nbsp;|&nbsp; D가 원 밖: ∠ADB &lt; ∠ACB</div>
+      </div>
+      <div class="box"><b class="t">2. 마주 보는 두 각의 합이 180°이면</b>
+        원에 내접하는 사각형의 대각의 합은 180°이다. 거꾸로,<br>
+        <span class="formula">∠A + ∠C = ∠B + ∠D = 180°</span> 인 사각형은 원에 내접한다.
+      </div>
+      <div class="box"><b class="t">3. 항상 원에 내접하는 사각형</b>
+        🔹 정사각형 &nbsp; 🔹 직사각형 &nbsp; 🔹 등변사다리꼴
+      </div>
+      <div class="box"><b class="t">💬 더 생각해 보기</b>
+        D가 원 안에 있으면 왜 ∠ADB가 ∠ACB보다 클까요?<br>
+        <span class="note">힌트: AD를 연장하여 원과 만나는 점을 잡고, 삼각형의 외각의 성질을 이용해 보세요.</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 오른쪽: 조작 화면 -->
+  <section class="board-wrap">
+    <div class="toolbar" id="toolbar">
+      <button class="btn btn-ghost" id="circleBtn">🔵 원 숨기기</button>
+      <button class="btn btn-ghost" id="snapBtn">🧲 원에 붙이기: ON</button>
+      <span class="tool" id="toolText">도구: 원 둘레 클릭하여 점 A, B, C 찍기 📍</span>
+    </div>
+    <svg id="board" viewBox="-280 -230 560 460" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse" x="-280" y="-230">
+          <path d="M20 0 L0 0 0 20" fill="none" stroke="#eef2f7" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect x="-280" y="-230" width="560" height="460" fill="url(#grid)"/>
+      <g id="scene"></g>
+    </svg>
+    <div class="status" id="status"></div>
+    <div class="hint" id="hint"></div>
+    <div class="note">* 탐구 완료 후 점 A, B, C도 원 둘레를 따라 끌어 보며 성질이 그대로 유지되는지 실험해 보세요!</div>
+  </section>
+</div>
+
+<script>
+const R = 150;
+const VB = {x:-280, y:-230, w:560, h:460};
+const NAMES = ['A','B','C'];
+const POS = ['in','on','out'];
+const POS_LABEL = {in:'원 안', on:'원 위', out:'원 밖'};
+const ANS = {same:{in:'gt',on:'eq',out:'lt'}, opp:{in:'gt',on:'eq',out:'lt'}};
+const SYM = {gt:'>', eq:'=', lt:'<'};
+const QUIZ = [
+  {id:'sq',  name:'정사각형',     ans:'O', pts:'25,8 75,8 75,58 25,58',     why:'네 각이 모두 90°라서 마주 보는 두 각의 합이 180°예요.'},
+  {id:'rect',name:'직사각형',     ans:'O', pts:'8,14 92,14 92,52 8,52',     why:'네 각이 모두 90°라서 마주 보는 두 각의 합이 180°예요.'},
+  {id:'iso', name:'등변사다리꼴', ans:'O', pts:'30,10 70,10 92,56 8,56',    why:'평행선 사이 이웃한 두 각의 합은 180°이고 두 밑각이 같으므로, 마주 보는 두 각의 합도 180°예요.'},
+  {id:'para',name:'평행사변형',   ans:'X', pts:'28,10 94,10 72,56 6,56',    why:'마주 보는 두 각이 서로 같아요. 합이 180°가 되려면 모두 90°(직사각형)여야 해요.'},
+  {id:'rh',  name:'마름모',       ans:'X', pts:'50,4 84,33 50,62 16,33',    why:'마주 보는 두 각이 서로 같아요. 정사각형일 때만 원에 내접해요.'},
+  {id:'trap',name:'사다리꼴',     ans:'X', pts:'22,10 60,10 94,56 6,56',    why:'일반적인 사다리꼴은 마주 보는 두 각의 합이 180°가 아니에요.'}
+];
+
+const $ = id => document.getElementById(id);
+const svg = $('board'), scene = $('scene');
+let S;
+
+/* ---------- 기하 계산 ---------- */
+const sub = (p,q) => ({x:p.x-q.x, y:p.y-q.y});
+const len = v => Math.hypot(v.x, v.y);
+const cross = (a,b) => a.x*b.y - a.y*b.x;
+const fmt = v => isNaN(v) ? '-' : v.toFixed(1) + '°';
+const P = p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`;
+function angleAt(A,V,B){
+  const a = sub(A,V), b = sub(B,V), la = len(a), lb = len(b);
+  if (la < 1e-6 || lb < 1e-6) return NaN;
+  let c = (a.x*b.x + a.y*b.y) / (la*lb);
+  c = Math.max(-1, Math.min(1, c));
+  return Math.acos(c) * 180 / Math.PI;
+}
+function toCircle(p){ const l = len(p) || 1; return {x:p.x/l*R, y:p.y/l*R}; }
+function clamp(p){ return {x:Math.max(VB.x+12, Math.min(VB.x+VB.w-12, p.x)), y:Math.max(VB.y+12, Math.min(VB.y+VB.h-12, p.y))}; }
+function sideOf(p){ const {A,B} = S.pts; const ab = sub(B,A); return cross(ab, sub(p,A)) / len(ab); }
+function info(){
+  const {A,B,C} = S.pts, D = S.D;
+  if (!(A && B && C && D)) return null;
+  const sc = sideOf(C), sd = sideOf(D);
+  const onLine = Math.abs(sd) < 3;
+  const same = !onLine && Math.sign(sc) === Math.sign(sd);
+  const dist = len(D);
+  const pos = Math.abs(dist - R) < 0.05 ? 'on' : (dist < R ? 'in' : 'out');
+  return {c:angleAt(A,C,B), d:angleAt(A,D,B), same, onLine, pos};
+}
+
+/* ---------- 초기화 ---------- */
+function init(){
+  S = {step:1, pts:{}, order:[], D:null, showCircle:true, snap:true,
+       rec:{same:{}, opp:{}}, ans:{same:{}, opp:{}}, checked:{same:false, opp:false}, ok:{same:false, opp:false},
+       quiz:{}, open:{}, drag:null, summary:false,
+       sub:'tri', triMoves:0, quadOk:false, help:false,
+       tri:{A:{x:-150,y:120}, B:{x:170,y:110}, C:{x:-20,y:-150}},
+       quad:{A:{x:-170,y:90}, B:{x:120,y:140}, C:{x:160,y:-110}, D:{x:-110,y:-60}}};
+  hint('💡 삼각형의 꼭짓점을 끌어 모양을 바꿔 보세요. 세 수직이등분선은 어떻게 되나요?');
+  renderAll();
+}
+function hint(t){ $('hint').textContent = t; }
+
+/* ---------- 마우스 / 터치 ---------- */
+function svgPt(e){
+  const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  const r = pt.matrixTransform(svg.getScreenCTM().inverse());
+  return {x:r.x, y:r.y};
+}
+function hitTest(p){
+  if (S.step === 1) return hit1(p);
+  if (S.step < 4) return null;
+  if (S.D && len(sub(p, S.D)) < 22) return 'D';
+  for (const k of NAMES) if (S.pts[k] && len(sub(p, S.pts[k])) < 20) return k;
+  return null;
+}
+svg.addEventListener('pointerdown', e => {
+  const p = svgPt(e), h = hitTest(p);
+  if (h){ S.drag = h; svg.setPointerCapture(e.pointerId); svg.style.cursor = 'grabbing'; e.preventDefault(); return; }
+  if (S.step === 2) placeABC(p);
+  else if (S.step === 3) placeD(p);
+});
+svg.addEventListener('pointermove', e => {
+  const p = svgPt(e);
+  if (!S.drag){ svg.style.cursor = hitTest(p) ? 'grab' : (S.step === 2 || S.step === 3 ? 'crosshair' : 'default'); return; }
+  if (S.step === 1){ move1(S.drag, p); renderAll(); return; }
+  if (S.drag === 'D') moveD(p); else moveABC(S.drag, p);
+  renderBoard(); renderStatus();
+});
+const endDrag = () => { if (S.drag){ S.drag = null; svg.style.cursor = 'grab'; } };
+svg.addEventListener('pointerup', endDrag);
+svg.addEventListener('pointercancel', endDrag);
+
+function placeABC(p){
+  if (Math.abs(len(p) - R) > 45){ hint('⚠️ 원 둘레 가까이를 클릭하세요.'); return; }
+  const q = toCircle(p);
+  for (const k of S.order) if (len(sub(q, S.pts[k])) < 45){ hint('⚠️ 다른 점과 너무 가까워요. 조금 떨어진 곳을 클릭하세요.'); return; }
+  const name = NAMES[S.order.length];
+  S.pts[name] = q; S.order.push(name);
+  if (S.order.length < 3) hint(`💡 원 둘레 위를 클릭하여 점 ${NAMES[S.order.length]}를 찍으세요.`);
+  else { S.step = 3; hint('💡 점선(직선 AB)을 기준으로 점 C와 같은 쪽의 아무 곳이나 클릭하여 점 D를 찍으세요.'); }
+  renderAll();
+}
+function placeD(p){
+  for (const k of NAMES) if (len(sub(p, S.pts[k])) < 20){ hint('⚠️ 다른 점과 겹치지 않게 찍으세요.'); return; }
+  p = clamp(p);
+  if (S.snap && Math.abs(len(p) - R) < 10) p = toCircle(p);
+  if (Math.abs(sideOf(p)) < 4){ hint('⚠️ 직선 AB 위가 아닌 곳에 찍으세요.'); return; }
+  S.D = p; S.step = 4;
+  hint(info().same
+    ? '💡 점 D를 끌어 원 안 → 원 위 → 원 밖으로 옮기며 두 각을 비교하고, 위치마다 기록하세요.'
+    : '💡 D가 C의 반대쪽에 있어요. 이번 단계에서는 D를 끌어 C와 같은 쪽으로 옮겨 보세요.');
+  renderAll();
+}
+function moveD(p){
+  p = clamp(p);
+  if (S.snap && Math.abs(len(p) - R) < 10) p = toCircle(p);
+  for (const k of NAMES) if (len(sub(p, S.pts[k])) < 8) return;
+  S.D = p;
+}
+function moveABC(name, p){
+  const q = toCircle(p);
+  for (const k of NAMES) if (k !== name && len(sub(q, S.pts[k])) < 30) return;
+  if (S.D && len(sub(q, S.D)) < 8) return;
+  S.pts[name] = q;
+}
+
+/* ---------- 기록 / 확인 ---------- */
+function record(kind){
+  const inf = info(); if (!inf) return;
+  if (inf.onLine){ hint('⚠️ D가 직선 AB 위에 있어요. 조금 옮겨 주세요.'); return; }
+  if (kind === 'same' && !inf.same){ hint('⚠️ 지금 D는 C의 반대쪽에 있어요. C와 같은 쪽으로 옮긴 뒤 기록하세요.'); return; }
+  if (kind === 'opp' && inf.same){ hint('⚠️ 지금 D는 C와 같은 쪽에 있어요. 직선 AB 건너편으로 옮긴 뒤 기록하세요.'); return; }
+  S.rec[kind][inf.pos] = {c:inf.c, d:inf.d};
+  S.checked[kind] = false;
+  const left = POS.filter(k => !S.rec[kind][k]).map(k => POS_LABEL[k]);
+  if (left.length){
+    hint(`✅ ${POS_LABEL[inf.pos]} 기록 완료! 남은 위치: ${left.join(', ')}` + (left.includes('원 위') ? ' (원 위는 D를 원 둘레에 붙여서 기록하세요)' : ''));
+  } else {
+    hint(kind === 'same' ? '✅ 세 위치를 모두 기록했어요. 표의 마지막 칸에 ∠ADB와 ∠ACB의 관계(>, =, <)를 골라 보세요.'
+                         : '✅ 세 위치를 모두 기록했어요. 표의 마지막 칸에 두 각의 합과 180°의 관계(>, =, <)를 골라 보세요.');
+  }
+  renderPanel();
+}
+function check(kind){
+  const ok = POS.every(k => S.ans[kind][k] === ANS[kind][k]);
+  S.checked[kind] = true; S.ok[kind] = ok;
+  const fb = kind === 'same' ? $('fbSame') : $('fbOpp');
+  if (ok){ fb.className = 'feedback'; fb.textContent = ''; hint('🎉 정답이에요! 발견한 내용을 확인해 보세요.'); }
+  else {
+    fb.className = 'feedback bad';
+    fb.textContent = kind === 'same'
+      ? '빨간 줄을 다시 확인해 보세요. 표에 기록된 두 각의 크기를 비교해 봐요.'
+      : '빨간 줄을 다시 확인해 보세요. 표에 기록된 합이 180°보다 큰지 작은지 비교해 봐요.';
+  }
+  renderPanel();
+}
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.matches('select[data-kind]')){
+    S.ans[t.dataset.kind][t.dataset.pos] = t.value;
+    S.checked[t.dataset.kind] = false;
+    renderPanel();
+  }
+});
+
+/* ---------- 그리기: 조작 화면 ---------- */
+function bisector(V,A,B){
+  const t1 = Math.atan2(A.y-V.y, A.x-V.x), t2 = Math.atan2(B.y-V.y, B.x-V.x);
+  let diff = t2 - t1;
+  while (diff > Math.PI) diff -= 2*Math.PI;
+  while (diff < -Math.PI) diff += 2*Math.PI;
+  return {t1, diff, mid:t1 + diff/2};
+}
+function wedge(V,A,B,cls){
+  const val = angleAt(A,V,B); if (isNaN(val)) return '';
+  const {t1, diff, mid} = bisector(V,A,B), r = 26;
+  const s = {x:V.x + r*Math.cos(t1), y:V.y + r*Math.sin(t1)};
+  const e = {x:V.x + r*Math.cos(t1+diff), y:V.y + r*Math.sin(t1+diff)};
+  const L = {x:V.x + 52*Math.cos(mid), y:V.y + 52*Math.sin(mid)};
+  return `<path d="M${P(V)} L${P(s)} A${r},${r} 0 0 ${diff > 0 ? 1 : 0} ${P(e)} Z" class="${cls}"/>`
+       + `<text x="${L.x}" y="${L.y}" class="alabel ${cls}t" text-anchor="middle" dominant-baseline="middle">${fmt(val)}</text>`;
+}
+const seg = (a,b,cls) => `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="${cls}"/>`;
+
+function renderBoard(){
+  if (S.step === 1){ renderStep1(); return; }
+  const {A,B,C} = S.pts, D = S.D, inf = info();
+  let h = `<circle cx="0" cy="0" r="${R}" class="circ${S.showCircle ? '' : ' ghost'}"/>`;
+  h += `<circle cx="0" cy="0" r="3" class="center"/><text x="7" y="16" class="lbl small">O</text>`;
+  if (A && B && C && S.step >= 3 && S.step <= 5){
+    const d = sub(B,A), l = len(d), u = {x:d.x/l, y:d.y/l};
+    h += seg({x:A.x - u.x*900, y:A.y - u.y*900}, {x:B.x + u.x*900, y:B.y + u.y*900}, 'abline');
+  }
+  if (inf && !inf.same && !inf.onLine) h += `<polygon points="${P(A)} ${P(C)} ${P(B)} ${P(D)}" class="quad"/>`;
+  if (A && B && C){ h += seg(A,B,'segAB') + seg(A,C,'segC') + seg(B,C,'segC'); }
+  if (D){ h += seg(A,D,'segD') + seg(B,D,'segD'); }
+  if (A && B && C) h += wedge(C,A,B,'wc');
+  if (D) h += wedge(D,A,B,'wd');
+  for (const k of S.order){
+    const p = S.pts[k], l = len(p), lp = {x:p.x + p.x/l*22, y:p.y + p.y/l*22};
+    h += `<circle cx="${p.x}" cy="${p.y}" r="7" class="pt"/>`
+       + `<text x="${lp.x}" y="${lp.y}" class="lbl" text-anchor="middle" dominant-baseline="middle">${k}</text>`;
+  }
+  if (D){
+    const {mid} = bisector(D,A,B), lp = {x:D.x - 22*Math.cos(mid), y:D.y - 22*Math.sin(mid)};
+    h += `<circle cx="${D.x}" cy="${D.y}" r="9" class="ptD"/>`
+       + `<text x="${lp.x}" y="${lp.y}" class="lbl lblD" text-anchor="middle" dominant-baseline="middle">D</text>`;
+  }
+  scene.innerHTML = h;
+}
+
+function renderStatus(){
+  if (S.step === 1){ renderStatus1(); return; }
+  const inf = info();
+  if (!inf){
+    $('status').innerHTML = '<span class="note">점 A, B, C, D를 모두 찍으면 각의 크기가 여기에 나타나요.</span>';
+    return;
+  }
+  const side = inf.onLine ? '직선 AB 위' : (inf.same ? 'C와 같은 쪽' : 'C의 반대쪽');
+  let h = `<span>점 D: <b>${POS_LABEL[inf.pos]}</b> · 직선 AB 기준 <b>${side}</b></span>`
+        + `<span class="chip c">∠ACB = ${fmt(inf.c)}</span><span class="chip d">∠ADB = ${fmt(inf.d)}</span>`;
+  if (S.step >= 5 && !inf.same && !inf.onLine) h += `<span class="chip s">합 = ${fmt(inf.c + inf.d)}</span>`;
+  $('status').innerHTML = h;
+}
+
+/* ---------- 그리기: 왼쪽 단계 ---------- */
+function renderTable(kind){
+  const rec = S.rec[kind], all = POS.every(k => rec[k]);
+  let h = '<table class="rec"><thead><tr><th>D의 위치</th><th class="cb">∠ACB</th><th class="cd">∠ADB</th>'
+        + (kind === 'opp' ? '<th>두 각의 합</th>' : '')
+        + `<th>${kind === 'same' ? '∠ADB ○ ∠ACB' : '합 ○ 180°'}</th></tr></thead><tbody>`;
+  for (const k of POS){
+    const r = rec[k], a = S.ans[kind][k] || '';
+    const mark = S.checked[kind] && a ? (a === ANS[kind][k] ? 'ok' : 'bad') : '';
+    const opts = ['gt','eq','lt'].map(v => `<option value="${v}"${a === v ? ' selected' : ''}>${SYM[v]}</option>`).join('');
+    h += `<tr class="${mark}"><td>${POS_LABEL[k]}</td><td>${r ? fmt(r.c) : '-'}</td><td>${r ? fmt(r.d) : '-'}</td>`
+       + (kind === 'opp' ? `<td>${r ? fmt(r.c + r.d) : '-'}</td>` : '')
+       + `<td><select data-kind="${kind}" data-pos="${k}"${all ? '' : ' disabled'}><option value="">?</option>${opts}</select></td></tr>`;
+  }
+  return h + '</tbody></table>';
+}
+function renderQuiz(){
+  let h = '';
+  for (const q of QUIZ){
+    const a = S.quiz[q.id], st = a ? (a === q.ans ? 'ok' : 'bad') : '';
+    h += `<div class="card ${st}">
+      <svg viewBox="0 0 100 66"><polygon points="${q.pts}" fill="#e0e7ff" stroke="#4338ca" stroke-width="2.5"/></svg>
+      <div class="name">${q.name}</div>
+      <div class="ox"><button data-q="${q.id}" data-v="O" class="${a === 'O' ? 'sel' : ''}">O</button><button data-q="${q.id}" data-v="X" class="${a === 'X' ? 'sel' : ''}">X</button></div>
+      ${st === 'ok' ? `<div class="why">✅ ${q.why}</div>` : st === 'bad' ? '<div class="why" style="color:#dc2626">다시 생각해 보세요. 마주 보는 두 각의 합이 항상 180°일까요?</div>' : ''}
+    </div>`;
+  }
+  $('quiz').innerHTML = h;
+  $('success').hidden = !QUIZ.every(q => S.quiz[q.id] === q.ans);
+}
+$('quiz').addEventListener('click', e => {
+  const b = e.target.closest('button[data-q]'); if (!b) return;
+  S.quiz[b.dataset.q] = b.dataset.v;
+  if (QUIZ.every(q => S.quiz[q.id] === q.ans)) hint('🎉 모두 맞혔어요! 정리 단계로 이동해 보세요.');
+  renderQuiz();
+});
+
+function renderPanel(){
+  document.querySelectorAll('.step').forEach(el => {
+    const n = +el.dataset.step;
+    const done = n < S.step, active = n === S.step;
+    el.classList.toggle('done', done); el.classList.toggle('active', active); el.classList.toggle('locked', n > S.step);
+    const open = active || (done && S.open[n]);
+    el.querySelector('.step-body').hidden = !open;
+    el.querySelector('.toggle').textContent = done ? (open ? '접기 ▲' : '다시 보기 ▼') : '';
+  });
+  $('progress').textContent = S.summary ? '정리 완료' : `${Math.min(S.step,6)} / 6 단계 진행 중`;
+  $('abcCounter').textContent = `남은 점: ${3 - S.order.length}개`;
+  $('tableSame').innerHTML = renderTable('same');
+  $('tableOpp').innerHTML = renderTable('opp');
+  $('checkSame').disabled = !POS.every(k => S.ans.same[k]) || !POS.every(k => S.rec.same[k]);
+  $('checkOpp').disabled  = !POS.every(k => S.ans.opp[k])  || !POS.every(k => S.rec.opp[k]);
+  $('discSame').hidden = !S.ok.same;
+  $('discOpp').hidden  = !S.ok.opp;
+  if (S.ok.same) $('fbSame').textContent = '';
+  if (S.ok.opp)  $('fbOpp').textContent = '';
+  document.querySelectorAll('[data-next]').forEach(b => b.hidden = S.step >= +b.dataset.next);
+  renderQuiz();
+  $('summary').hidden = !S.summary;
+  $('toolText').textContent = S.step === 1 ? '도구: 꼭짓점을 끌어서 움직이기 ✋'
+                            : S.step === 2 ? '도구: 원 둘레 클릭하여 점 A, B, C 찍기 📍'
+                            : S.step === 3 ? '도구: 클릭하여 점 D 찍기 📍'
+                            : '도구: 점을 끌어서 움직이기 ✋';
+}
+function renderAll(){ renderBoard(); renderStatus(); renderPanel(); render1Panel(); }
+
+
+/* ---------- 1단계: 외접원을 그릴 수 있을까? ---------- */
+const BIS_COLOR = ['#2563eb','#16a34a','#ea580c','#9333ea'];
+function circum(A,B,C){
+  const d = 2*(A.x*(B.y-C.y) + B.x*(C.y-A.y) + C.x*(A.y-B.y));
+  if (Math.abs(d) < 1e-6) return null;
+  const a2 = A.x*A.x+A.y*A.y, b2 = B.x*B.x+B.y*B.y, c2 = C.x*C.x+C.y*C.y;
+  return {x:(a2*(B.y-C.y)+b2*(C.y-A.y)+c2*(A.y-B.y))/d, y:(a2*(C.x-B.x)+b2*(A.x-C.x)+c2*(B.x-A.x))/d};
+}
+function bisLine(P1,P2,color){
+  const M = {x:(P1.x+P2.x)/2, y:(P1.y+P2.y)/2}, d = sub(P2,P1), l = len(d) || 1;
+  const n = {x:-d.y/l, y:d.x/l};
+  const a = {x:M.x - n.x*1200, y:M.y - n.y*1200}, b = {x:M.x + n.x*1200, y:M.y + n.y*1200};
+  const tick = 7, u = {x:d.x/l*tick, y:d.y/l*tick};
+  return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${color}" stroke-width="2" stroke-dasharray="8 5" opacity=".9"/>`
+       + `<circle cx="${M.x}" cy="${M.y}" r="4" fill="#fff" stroke="${color}" stroke-width="2"/>`;
+}
+function quadInfo(){
+  const {A,B,C,D} = S.quad;
+  const O1 = circum(A,B,C), O2 = circum(C,D,A);
+  const ok = !!(O1 && O2 && len(sub(O1,O2)) < 1.5);
+  return {O1, O2, ok};
+}
+function hit1(p){
+  const pts = S.sub === 'tri' ? S.tri : S.quad;
+  for (const k of Object.keys(pts)) if (len(sub(p, pts[k])) < 22) return k;
+  return null;
+}
+function move1(k, p){
+  p = clamp(p);
+  const pts = S.sub === 'tri' ? S.tri : S.quad;
+  for (const j of Object.keys(pts)) if (j !== k && len(sub(p, pts[j])) < 25) return;
+  if (S.sub === 'tri'){
+    S.tri[k] = p; S.triMoves++;
+    if (S.triMoves === 40) hint('🎉 삼각형의 모양이 바뀌어도 세 수직이등분선은 항상 한 점에서 만나네요! 발견한 내용을 확인해 보세요.');
+    return;
+  }
+  if (k === 'D'){
+    const {A,B,C} = S.quad, O = circum(A,B,C);
+    if (O){ const r = len(sub(A,O)), v = sub(p,O), l = len(v);
+      if (l > 1e-6 && Math.abs(l - r) < 9) p = {x:O.x + v.x/l*r, y:O.y + v.y/l*r}; }
+  }
+  S.quad[k] = p;
+  if (!S.quadOk && quadInfo().ok){
+    S.quadOk = true;
+    hint('🎉 네 수직이등분선이 한 점에서 만났어요! 지금 점 D는 어디에 있나요? 발견한 내용을 확인해 보세요.');
+  }
+}
+function polyStr(arr){ return arr.map(P).join(' '); }
+function ptLabel(p, c, name, color){
+  const v = sub(p, c), l = len(v) || 1, lp = {x:p.x + v.x/l*24, y:p.y + v.y/l*24};
+  return `<circle cx="${p.x}" cy="${p.y}" r="9" fill="${color}" stroke="#fff" stroke-width="2.5"/>`
+       + `<text x="${lp.x}" y="${lp.y}" class="lbl" text-anchor="middle" dominant-baseline="middle">${name}</text>`;
+}
+function renderStep1(){
+  let h = '';
+  if (S.sub === 'tri'){
+    const {A,B,C} = S.tri, O = circum(A,B,C);
+    if (O){
+      const r = len(sub(A,O));
+      if (r < 2000) h += `<circle cx="${O.x}" cy="${O.y}" r="${r}" class="circ"/>`;
+    }
+    h += `<polygon points="${polyStr([A,B,C])}" fill="rgba(67,56,202,.07)" stroke="#1e293b" stroke-width="2.5"/>`;
+    h += bisLine(A,B,BIS_COLOR[0]) + bisLine(B,C,BIS_COLOR[1]) + bisLine(C,A,BIS_COLOR[2]);
+    if (O){ h += `<circle cx="${O.x}" cy="${O.y}" r="6" fill="#4338ca" stroke="#fff" stroke-width="2"/>`
+               + `<text x="${O.x+10}" y="${O.y+18}" class="lbl" style="fill:#4338ca">O</text>`; }
+    const cen = {x:(A.x+B.x+C.x)/3, y:(A.y+B.y+C.y)/3};
+    for (const k of ['A','B','C']) h += ptLabel(S.tri[k], cen, k, '#1e293b');
+  } else {
+    const {A,B,C,D} = S.quad, q = quadInfo();
+    if (q.ok){
+      const r = len(sub(A,q.O1));
+      h += `<circle cx="${q.O1.x}" cy="${q.O1.y}" r="${r}" class="circ"/>`;
+    } else if (S.help && q.O1){
+      const r = len(sub(A,q.O1));
+      if (r < 2000) h += `<circle cx="${q.O1.x}" cy="${q.O1.y}" r="${r}" class="circ ghost"/>`;
+    }
+    h += `<polygon points="${polyStr([A,B,C,D])}" fill="rgba(67,56,202,.07)" stroke="#1e293b" stroke-width="2.5"/>`;
+    h += bisLine(A,B,BIS_COLOR[0]) + bisLine(B,C,BIS_COLOR[1]) + bisLine(C,D,BIS_COLOR[2]) + bisLine(D,A,BIS_COLOR[3]);
+    if (q.ok){
+      h += `<circle cx="${q.O1.x}" cy="${q.O1.y}" r="7" fill="#16a34a" stroke="#fff" stroke-width="2"/>`
+         + `<text x="${q.O1.x+10}" y="${q.O1.y+18}" class="lbl" style="fill:#16a34a">O</text>`;
+    } else {
+      if (q.O1) h += `<circle cx="${q.O1.x}" cy="${q.O1.y}" r="6" fill="#2563eb" stroke="#fff" stroke-width="2"/><text x="${q.O1.x+9}" y="${q.O1.y+18}" class="lbl" style="fill:#2563eb;font-size:14px">O₁</text>`;
+      if (q.O2) h += `<circle cx="${q.O2.x}" cy="${q.O2.y}" r="6" fill="#ea580c" stroke="#fff" stroke-width="2"/><text x="${q.O2.x+9}" y="${q.O2.y+18}" class="lbl" style="fill:#ea580c;font-size:14px">O₂</text>`;
+    }
+    const cen = {x:(A.x+B.x+C.x+D.x)/4, y:(A.y+B.y+C.y+D.y)/4};
+    for (const k of ['A','B','C']) h += ptLabel(S.quad[k], cen, k, '#1e293b');
+    h += ptLabel(D, cen, 'D', '#ea580c').replace('class="lbl"', 'class="lbl lblD"');
+  }
+  scene.innerHTML = h;
+}
+function renderStatus1(){
+  if (S.sub === 'tri'){
+    const O = circum(S.tri.A, S.tri.B, S.tri.C);
+    $('status').innerHTML = O
+      ? '<span>세 변의 수직이등분선: <b>한 점 O에서 만나요</b></span><span class="chip s">외접원 ✔ 그릴 수 있음</span>'
+      : '<span>세 점이 한 직선 위에 있어 삼각형이 아니에요.</span>';
+  } else {
+    const q = quadInfo();
+    $('status').innerHTML = q.ok
+      ? '<span>네 변의 수직이등분선: <b>한 점 O에서 만나요</b></span><span class="chip s">외접원 ✔ 그릴 수 있음</span>'
+      : `<span>네 변의 수직이등분선: <b>한 점에서 만나지 않아요</b></span><span class="chip d">외접원 ✖ 그릴 수 없음</span>${q.O1 && q.O2 ? `<span class="note">O₁과 O₂ 사이 거리: ${len(sub(q.O1,q.O2)).toFixed(0)}</span>` : ''}`;
+  }
+}
+function render1Panel(){
+  $('s1tri').hidden = S.sub !== 'tri' && false;
+  $('s1quad').hidden = S.sub !== 'quad';
+  $('discTri').hidden = S.triMoves < 40;
+  $('toQuad').hidden = S.sub !== 'tri';
+  $('discQuad').hidden = !S.quadOk;
+  $('helpBtn').textContent = S.help ? '💡 힌트 숨기기' : '💡 힌트 보기: 세 점 A, B, C를 지나는 원';
+  $('toolbar').querySelectorAll('button').forEach(b => b.hidden = S.step === 1);
+}
+$('toQuad').onclick = () => {
+  S.sub = 'quad';
+  hint('💡 네 변의 수직이등분선이 한 점에서 만나나요? 점 D를 움직여 한 점에서 만나도록 만들어 보세요.');
+  renderAll();
+};
+$('helpBtn').onclick = () => { S.help = !S.help; renderAll(); };
+
+/* ---------- 버튼 ---------- */
+$('resetBtn').onclick = init;
+$('recSame').onclick = () => record('same');
+$('recOpp').onclick = () => record('opp');
+$('checkSame').onclick = () => check('same');
+$('checkOpp').onclick = () => check('opp');
+document.querySelectorAll('[data-next]').forEach(b => b.onclick = () => {
+  S.step = +b.dataset.next;
+  hint(S.step === 2 ? '💡 원 둘레 위를 클릭하여 첫 번째 점 A를 찍으세요.'
+     : S.step === 5 ? '💡 이번에는 D를 직선 AB 건너편(C의 반대쪽)으로 옮겨 원 안 → 원 위 → 원 밖에서 기록하세요.'
+                    : '💡 각 사각형이 항상 원에 내접하는지 O, X로 골라 보세요.');
+  renderAll();
+});
+document.querySelectorAll('.step-head').forEach(h => h.onclick = () => {
+  const n = +h.parentElement.dataset.step;
+  if (n < S.step){ S.open[n] = !S.open[n]; renderPanel(); }
+});
+$('circleBtn').onclick = () => {
+  S.showCircle = !S.showCircle;
+  $('circleBtn').textContent = S.showCircle ? '🔵 원 숨기기' : '🔵 원 보이기';
+  renderBoard();
+};
+$('snapBtn').onclick = () => {
+  S.snap = !S.snap;
+  $('snapBtn').textContent = `🧲 원에 붙이기: ${S.snap ? 'ON' : 'OFF'}`;
+};
+$('toSummary').onclick = () => {
+  S.summary = true; S.step = 7; renderAll();
+  $('summary').scrollIntoView({behavior:'smooth', block:'start'});
+};
+
+init();
+</script>
+</body>
+</html>
